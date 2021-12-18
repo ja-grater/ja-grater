@@ -1,0 +1,58 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+    id 'maven-publish'
+}
+
+group 'cn.enaium.ja-grater'
+version '1.0.0'
+
+targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_1_8
+
+jar {
+    manifest.attributes(
+            "Manifest-Version": 1.0,
+            "Main-Class": "cn.enaiun.ja.grater.Launcher",
+            "Premain-Class": "cn.enaiun.ja.grater.Launcher",
+            "Implementation-Title": "${project.name}",
+            "Implementation-Version": "${project.version}",
+            "Implementation-Vendor": "${project.group}",
+            "Implementation-Timestamp": new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+            "Can-Redefine-Classes": true,
+            "Can-Retransform-Classes": true
+    )
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+}
+
+java {
+    withSourcesJar()
+}
+
+publishing {
+    repositories {
+        def ENV = System.getenv()
+        if (ENV.MAVEN_URL) {
+            maven {
+                url ENV.MAVEN_URL
+            }
+        }
+    }
+
+    publications {
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId project.name
+            version project.version
+            from components.java
+        }
+    }
+}
