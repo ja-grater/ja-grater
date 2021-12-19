@@ -3,11 +3,10 @@ package cn.enaiun.ja.grater;
 import cn.enaiun.ja.grater.plugin.PluginInitialize;
 import cn.enaiun.ja.grater.plugin.PluginManager;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
-import java.nio.file.Paths;
-import java.util.Properties;
 import java.util.jar.JarFile;
 
 /**
@@ -23,27 +22,19 @@ public class Launcher {
         welcome();
         inst.appendToBootstrapClassLoaderSearch(new JarFile(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getFile()));
         Grater grater = new Grater();
-
-
         PluginManager pluginManager = new PluginManager();
+        //Load plugin
+        if (args != null) {
+            pluginManager.load(args, inst);
+            System.out.printf("Loaded %d Plugin\n", pluginManager.getPluginInitializes().size());
+            for (PluginInitialize pluginInitialize : pluginManager.getPluginInitializes()) {
+                System.out.printf("%s | %s | %s | %s\n", pluginInitialize.getName(), pluginInitialize.getAuthor(), pluginInitialize.getVersion(), pluginInitialize.getDescription());
 
-        if (args != null && new File(args).exists() && new File(args).getName().endsWith(".properties")) {
-            Properties properties = new Properties();
-            properties.load(new BufferedReader(new FileReader(args)));
-
-            //Load plugin
-            if (properties.containsKey("plugin.path")) {
-                pluginManager.load(properties.getProperty("plugin.path"), inst);
-                System.out.printf("Loaded %d Plugin\n", pluginManager.getPluginInitializes().size());
-                for (PluginInitialize pluginInitialize : pluginManager.getPluginInitializes()) {
-                    System.out.printf("%s | %s | %s | %s\n", pluginInitialize.getName(), pluginInitialize.getAuthor(), pluginInitialize.getVersion(), pluginInitialize.getDescription());
-
-                    //Add transformer
-                    pluginInitialize.getTransformers().forEach(grater::addTransformer);
-                }
-
-                pluginManager.getPluginInitializes().forEach(pluginInitialize -> pluginInitialize.initialize(properties));
+                //Add transformer
+                pluginInitialize.getTransformers().forEach(grater::addTransformer);
             }
+
+            pluginManager.getPluginInitializes().forEach(PluginInitialize::initialize);
         }
 
         inst.addTransformer(grater, true);
