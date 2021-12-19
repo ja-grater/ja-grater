@@ -3,6 +3,7 @@ package cn.enaiun.ja.grater.plugin;
 import cn.enaiun.ja.grater.transformer.Transformer;
 
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author Enaium
@@ -12,8 +13,9 @@ public interface PluginInitialize {
 
     /**
      * plugin initialization
+     * @param properties agent config
      */
-    default void initialize() {
+    default void initialize(Properties properties) {
 
     }
 
