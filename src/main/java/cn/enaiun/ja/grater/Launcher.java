@@ -2,11 +2,14 @@ package cn.enaiun.ja.grater;
 
 import cn.enaiun.ja.grater.plugin.PluginInitialize;
 import cn.enaiun.ja.grater.plugin.PluginManager;
+import cn.enaiun.ja.grater.util.ConfigUtil;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.jar.JarFile;
 
 /**
@@ -20,12 +23,14 @@ public class Launcher {
 
     public static void premain(String args, Instrumentation inst) throws IOException {
         welcome();
+        Properties properties = ConfigUtil.getConfig();
+
         inst.appendToBootstrapClassLoaderSearch(new JarFile(Launcher.class.getProtectionDomain().getCodeSource().getLocation().getFile()));
         Grater grater = new Grater();
         PluginManager pluginManager = new PluginManager();
         //Load plugin
-        if (args != null) {
-            pluginManager.load(args, inst);
+        if (properties.containsKey("plugin.dir")) {
+            pluginManager.load(properties.getProperty("plugin.dir"), inst);
             System.out.printf("Loaded %d Plugin\n", pluginManager.getPluginInitializes().size());
             for (PluginInitialize pluginInitialize : pluginManager.getPluginInitializes()) {
                 System.out.printf("%s | %s | %s | %s\n", pluginInitialize.getName(), pluginInitialize.getAuthor(), pluginInitialize.getVersion(), pluginInitialize.getDescription());
@@ -37,7 +42,9 @@ public class Launcher {
             pluginManager.getPluginInitializes().forEach(PluginInitialize::initialize);
         }
 
+
         inst.addTransformer(grater, true);
+
         for (Class<?> klass : inst.getAllLoadedClasses()) {
             if (grater.getTargets().contains(klass.getName())) {
                 try {
